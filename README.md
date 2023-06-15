@@ -1,4 +1,4 @@
-# Segment Anything model for MITK
+# Segment Anything for MITK
 This repo contains Segment Anything model wrapper to be used with MITK.
 The Medical Imaging Interaction Toolkit (MITK) is a free open-source software system for development of interactive medical image processing software. MITK combines the Insight Toolkit (ITK) and the Visualization Toolkit (VTK) with an application framework. MITK's SAM 2D tool uses this wrapper as its backend for inferencing.
 
