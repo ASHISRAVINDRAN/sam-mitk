@@ -9,6 +9,7 @@ Embeddings generated per file is cached for future use during the runtime.
 ```bash
 pip install git+https://github.com/ASHISRAVINDRAN/sam-mitk.git
 ```
+Pip installing this will automatically install `Segment Anything` in the python virtual environment. However, use is required to download pretrained weights.
 The code requires `Python>=3.8`, as well as `Pytorch>=1.7` and `torchvision>=0.8`. Please follow the instructions [here](https://pytorch.org/get-started/locally/) to install both PyTorch and TorchVision dependencies. Installing both PyTorch and TorchVision with CUDA support is strongly recommended.
 
 ## Usage
