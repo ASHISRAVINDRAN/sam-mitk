@@ -36,7 +36,6 @@ class SAMRunner:
         self.trigger_file = os.path.join(input_dir, trigger_file)
         self.control_file = os.path.join(input_dir, 'control.txt')
         try:
-            raise Exception('spam', 'eggs')
             sam = sam_model_registry[self.model_type](checkpoint=checkpoint_path)
             sam.to(device=self.device)
             self.predictor = SamPredictor(sam)
