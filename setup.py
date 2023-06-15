@@ -24,8 +24,5 @@ setup(
             'Development Status :: 4 - Beta'
             'Environment :: GPU :: NVIDIA CUDA'
         ],
-    entry_points={
-        'console_scripts': ['mitk_sam_runner = samrunner.run_inference_daemon:main']
-        }
-    
+    scripts=['samrunner/run_inference_daemon.py']s
 )
