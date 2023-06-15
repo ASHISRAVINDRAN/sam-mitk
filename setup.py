@@ -24,5 +24,5 @@ setup(
             'Development Status :: 4 - Beta'
             'Environment :: GPU :: NVIDIA CUDA'
         ],
-    scripts=['samrunner/run_inference_daemon.py']s
+    scripts=['samrunner/run_inference_daemon.py']
 )
