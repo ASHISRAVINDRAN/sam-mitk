@@ -35,14 +35,10 @@ class SAMRunner:
         self.RETRY_LOADING = 10
         self.trigger_file = os.path.join(input_dir, trigger_file)
         self.control_file = os.path.join(input_dir, 'control.txt')
-        try:
-            sam = sam_model_registry[self.model_type](checkpoint=checkpoint_path)
-            sam.to(device=self.device)
-            self.predictor = SamPredictor(sam)
-        except Exception as e:
-            raise e
-            print('An Exception occurred while initializing SAM')
-
+        sam = sam_model_registry[self.model_type](checkpoint=checkpoint_path)
+        sam.to(device=self.device)
+        self.predictor = SamPredictor(sam)
+        
     def get_nifti_image(self, file='images/modal_0.nii.gz'):
         n_try = 0
         while n_try < self.RETRY_LOADING:
@@ -177,15 +173,16 @@ if __name__ == "__main__":
     print(args.input_folder)
     print(args.output_folder)
     print(args.model_type)
-    sam_runner = SAMRunner(args.input_folder, args.output_folder, args.trigger_file, args.model_type, args.checkpoint,
-                          args.device)
     try:
+        sam_runner = SAMRunner(args.input_folder, args.output_folder, args.trigger_file, args.model_type, args.checkpoint,
+                          args.device)
         sam_runner.start_agent()
-    except torch.cuda.OutOfMemoryError:
+    except torch.cuda.OutOfMemoryError as e:
         print('CudaOutOfMemoryError')
         torch.cuda.empty_cache()
+        print(e)
     except Exception as e:
+        print('KILL')
         print(e)
     print('Stopping daemon...')
-    print('KILL')
-
+    
