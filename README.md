@@ -2,7 +2,7 @@
 This repo contains Segment Anything model wrapper to be used with MITK.
 The Medical Imaging Interaction Toolkit (MITK) is a free open-source software system for development of interactive medical image processing software. MITK combines the Insight Toolkit (ITK) and the Visualization Toolkit (VTK) with an application framework. MITK's SAM 2D tool uses this wrapper as its backend for inferencing.
 
-The code runs a daemon monitoring any given folder any input files (`*.nii.gz`) and prompt points in a `trigger.csv` file placed inside the input folder.
+The code runs a daemon monitoring any given folder any input files (`*.nrrd`) and prompt points in a `trigger.csv` file placed inside the input folder.
 Embeddings generated per file is cached for future use during the runtime.
 
 ## Installation

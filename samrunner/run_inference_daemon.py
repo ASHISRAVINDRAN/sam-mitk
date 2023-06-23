@@ -14,12 +14,15 @@ import glob
 import SimpleITK as sitk
 import cv2
 
+MITK_META_JSON = u'[{"labels": [{"color": {"type": "ColorProperty","value": [1.0, 0.0, 0.0]},"locked": true,"name": "Label 1","opacity": 1,"value": 1,"visible": true}]}]'
+
 
 class Feature:
     def __init__(self, input_size: tuple = None, original_size: tuple = None, feature_space: np.ndarray = None):
         self.input_size = input_size
         self.original_size = original_size
         self.feature_embeddings = feature_space
+
 
 class SAMRunner:
 
@@ -38,7 +41,7 @@ class SAMRunner:
         sam = sam_model_registry[self.model_type](checkpoint=checkpoint_path)
         sam.to(device=self.device)
         self.predictor = SamPredictor(sam)
-        
+
     def get_nifti_image(self, file='images/modal_0.nii.gz'):
         n_try = 0
         while n_try < self.RETRY_LOADING:
@@ -99,7 +102,7 @@ class SAMRunner:
         self.predictor.is_image_set = True
 
     def start_agent(self):
-        path_template = os.path.join(self.input_dir, '*.nii.gz')
+        path_template = os.path.join(self.input_dir, '*.nrrd')
         print('READY')
         while not glob.glob(path_template):
             time.sleep(0.1)  # wait until image file is found in the input folder
@@ -115,7 +118,8 @@ class SAMRunner:
                 image_2d = self.get_nifti_image(file_path)
                 image_2d = cv2.normalize(image_2d, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
                 self.get_features(image_2d)
-                feature_object = Feature(self.predictor.input_size, self.predictor.original_size, self.predictor.features)
+                feature_object = Feature(self.predictor.input_size, self.predictor.original_size,
+                                         self.predictor.features)
                 self.MASTER_RECORD[self.active_file_name] = feature_object
             else:
                 print('File found in MASTER RECORD:', file_path)
@@ -124,7 +128,7 @@ class SAMRunner:
             try:
                 os.remove(file_path)
             except:
-                print('Delete failed...')
+                print('Delete failed')
             _cached_stamp = 0
             while not glob.glob(self.trigger_file):
                 time.sleep(0.01)  # wait until trigger file is found in the input folder
@@ -137,13 +141,19 @@ class SAMRunner:
                     print('input labels', input_labels)
                     if self.IsStop():
                         break
+                    output_path = os.path.join(self.output_folder, self.active_file_name)
+                    try:
+                        os.remove(output_path)
+                    except:
+                        print('Delete failed')
                     mask, _, _ = self.predictor.predict(point_coords=input_points, point_labels=input_labels,
                                                         multimask_output=False)
-                    print(mask.shape)
-                    seg_resized_itk = sitk.GetImageFromArray(mask.astype(np.uint8, copy= False))
-                    output_path = os.path.join(self.output_folder, self.active_file_name)
-                    print('Output path', output_path)
-                    sitk.WriteImage(seg_resized_itk, output_path)
+                    seg_image_itk = sitk.GetImageFromArray(mask.astype(np.uint8, copy=False))
+                    seg_image_itk.SetMetaData('modality', u'org.mitk.multilabel.segmentation')
+                    seg_image_itk.SetMetaData('org.mitk.multilabel.segmentation.labelgroups', MITK_META_JSON)
+                    seg_image_itk.SetMetaData('org.mitk.multilabel.segmentation.unlabeledlabellock', '0')
+                    seg_image_itk.SetMetaData('org.mitk.multilabel.segmentation.version', '1')
+                    sitk.WriteImage(seg_image_itk, output_path)
                     _cached_stamp = stamp
                     print('SUCCESS')
                 if self.IsStop() or glob.glob(path_template): break
@@ -174,8 +184,9 @@ if __name__ == "__main__":
     print(args.output_folder)
     print(args.model_type)
     try:
-        sam_runner = SAMRunner(args.input_folder, args.output_folder, args.trigger_file, args.model_type, args.checkpoint,
-                          args.device)
+        sam_runner = SAMRunner(args.input_folder, args.output_folder, args.trigger_file, args.model_type,
+                               args.checkpoint,
+                               args.device)
         sam_runner.start_agent()
     except torch.cuda.OutOfMemoryError as e:
         print('CudaOutOfMemoryError')
@@ -185,4 +196,3 @@ if __name__ == "__main__":
         print('KILL')
         print(e)
     print('Stopping daemon...')
-    
