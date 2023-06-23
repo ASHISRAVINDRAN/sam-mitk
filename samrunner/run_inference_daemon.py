@@ -42,7 +42,11 @@ class SAMRunner:
         sam.to(device=self.device)
         self.predictor = SamPredictor(sam)
 
-    def get_nifti_image(self, file='images/modal_0.nii.gz'):
+    @staticmethod
+    def send_signal(signal):
+        print(signal)
+
+    def get_nifti_image(self, file):
         n_try = 0
         while n_try < self.RETRY_LOADING:
             try:
@@ -65,9 +69,9 @@ class SAMRunner:
         try:
             with open(self.control_file, mode='r') as file:
                 for line in file:
-                    if line == "KILL":
+                    if line.upper() == "KILL":
                         self.stop = True
-                        print('KILL')
+                        self.send_signal('KILL')  # print('KILL')
                         break
                 else:
                     self.stop = False
@@ -103,7 +107,7 @@ class SAMRunner:
 
     def start_agent(self):
         path_template = os.path.join(self.input_dir, '*.nrrd')
-        print('READY')
+        self.send_signal('READY')
         while not glob.glob(path_template):
             time.sleep(0.1)  # wait until image file is found in the input folder
             if self.IsStop(): break
@@ -189,10 +193,10 @@ if __name__ == "__main__":
                                args.device)
         sam_runner.start_agent()
     except torch.cuda.OutOfMemoryError as e:
-        print('CudaOutOfMemoryError')
+        SAMRunner.send_signal('CudaOutOfMemoryError')
         torch.cuda.empty_cache()
         print(e)
     except Exception as e:
-        print('KILL')
+        SAMRunner.send_signal('KILL')
         print(e)
     print('Stopping daemon...')
