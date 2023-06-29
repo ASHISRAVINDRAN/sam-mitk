@@ -2,13 +2,11 @@ import time
 from typing import Dict
 import csv
 import torch
-import sys
 import os
 import argparse
 from pkg_resources import require
 from pathlib import Path
 from segment_anything import sam_model_registry, SamPredictor
-import multiprocessing as mp
 import numpy as np
 import glob
 import SimpleITK as sitk
@@ -79,9 +77,10 @@ class SAMRunner:
             self.stop = False
 
     def get_features(self, image: np.ndarray):
-        assert image.ndim == 2
+        assert image.ndim in (2,3)
         assert image.dtype == np.uint8
-        image = np.dstack([image[:, :, None]] * 3)
+        if image.ndim == 2:
+            image = np.dstack([image[:, :, None]] * 3)
         self.predictor.set_image(image)
 
     def get_points_and_labels_from_trigger_file(self):
@@ -187,6 +186,7 @@ if __name__ == "__main__":
     print(args.input_folder)
     print(args.output_folder)
     print(args.model_type)
+    print(args.device)
     try:
         sam_runner = SAMRunner(args.input_folder, args.output_folder, args.trigger_file, args.model_type,
                                args.checkpoint,
