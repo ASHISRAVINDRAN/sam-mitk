@@ -9,11 +9,11 @@ Embeddings generated per file is cached for future use during the runtime.
 ```bash
 pip install git+https://github.com/ASHISRAVINDRAN/sam-mitk.git
 ```
-Pip installing this will automatically install `Segment Anything` in the python virtual environment. However, use is required to download pretrained weights.
+Pip installing this will automatically install `Segment Anything` in the python virtual environment. Pretrained weights for the supported model type are downloaded automatically in the directory specified, if the checkpoint doesn't exist already.
 The code requires `Python>=3.8`, as well as `Pytorch>=1.7` and `torchvision>=0.8`. Please follow the instructions [here](https://pytorch.org/get-started/locally/) to install both PyTorch and TorchVision dependencies. Installing both PyTorch and TorchVision with CUDA support is strongly recommended.
 
 ## Usage
 The program can be used independent of MITK.
 ```bash
-python run_inference_daemon.py --input-folder ./input --output-folder ./output --trigger-file trigger.csv --model-type vit_b --checkpoint ./vit_b.pth --device cuda
+python run_inference_daemon.py --input-folder ./input --output-folder ./output --trigger-file trigger.csv --model-type vit_b --checkpoint ./directory --device cuda
 ```
