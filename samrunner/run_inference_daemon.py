@@ -4,13 +4,15 @@ import csv
 import torch
 import os
 import argparse
-from pkg_resources import require
+import requests
 from pathlib import Path
+from requests import HTTPError
 from segment_anything import sam_model_registry, SamPredictor
 import numpy as np
 import glob
 import SimpleITK as sitk
 import cv2
+from tqdm import tqdm
 
 MITK_META_JSON = u'[{"labels": [{"color": {"type": "ColorProperty","value": [1.0, 0.0, 0.0]},"locked": true,"name": "Label 1","opacity": 1,"value": 1,"visible": true}]}]'
 
@@ -24,11 +26,10 @@ class Feature:
 
 class SAMRunner:
 
-    def __init__(self, input_dir, output_folder, trigger_file, model_type, checkpoint_path, device):
+    def __init__(self, input_dir, output_folder, trigger_file, model_type, checkpoint_dir, device):
         self.input_dir: Path = Path(input_dir)
         self.output_folder: Path = Path(output_folder)
         self.model_type = model_type
-        self.checkpoint_path: Path = Path(checkpoint_path)
         self.device = torch.device('cuda' if torch.cuda.is_available() and device == 'cuda' else 'cpu')
         self.MASTER_RECORD: Dict[str, Feature] = {}
         self.active_file_name: str = None
@@ -36,13 +37,49 @@ class SAMRunner:
         self.RETRY_LOADING = 10
         self.trigger_file = os.path.join(input_dir, trigger_file)
         self.control_file = os.path.join(input_dir, 'control.txt')
-        sam = sam_model_registry[self.model_type](checkpoint=checkpoint_path)
+        checkpoint_file = self.download_model(self.model_type, Path(checkpoint_dir))
+        sam = sam_model_registry[self.model_type](checkpoint=checkpoint_file)
         sam.to(device=self.device)
         self.predictor = SamPredictor(sam)
 
     @staticmethod
     def send_signal(signal):
         print(signal)
+
+    @staticmethod
+    def download_model(model_type, target_dir: Path, force=False) -> Path:
+        if model_type == 'vit_h':
+            url = 'https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth'
+        if model_type == 'vit_l':
+            url = 'https://dl.fbaipublicfiles.com/segment_anything/sam_vit_l_0b3195.pth'
+        if model_type == 'vit_b':
+            url = 'https://dl.fbaipublicfiles.com/segment_anything/sam_vit_b_01ec64.pth'
+        else:
+            raise Exception('Model type not supported')
+        file_name = url.split('/')[-1]
+        # _cwd = Path(__file__)
+        # file_path = _cwd.cwd().parents[1] / file_name  # Go 2 levels up
+        file_path = target_dir / file_name
+        if file_path.exists() and not force:
+            print('Model checkpoint detected.')
+            return file_path
+        try:
+            with requests.get(url, stream=True) as r:
+                file_size = int(r.headers.get('Content-Length', 0))
+                r.raise_for_status()
+                progress_bar = tqdm(total=file_size, unit='iB', unit_scale=True)
+                with open(file_path, 'wb') as f:
+                    for chunk in r.iter_content(chunk_size=8192):
+                        progress_bar.update(len(chunk))
+                        f.write(chunk)
+                progress_bar.close()
+        except HTTPError as http_error:
+            print(f'HTTP error occurred: {http_error}')
+            raise http_error
+        except Exception as error:
+            print(f'Error occurred during download: {error}')
+            raise error
+        return file_path
 
     def get_nifti_image(self, file):
         n_try = 0
@@ -77,7 +114,7 @@ class SAMRunner:
             self.stop = False
 
     def get_features(self, image: np.ndarray):
-        assert image.ndim in (2,3)
+        assert image.ndim in (2, 3)
         assert image.dtype == np.uint8
         if image.ndim == 2:
             image = np.dstack([image[:, :, None]] * 3)
@@ -173,8 +210,8 @@ parser.add_argument("--output-folder", type=str, required=True, help="Folder to 
 parser.add_argument("--trigger-file", type=str, required=True, help="Path to the file where points will be written to.")
 parser.add_argument("--model-type", type=str, required=True, help="The type of model to load, in "
                                                                   "['default', 'vit_h', 'vit_l', 'vit_b']")
-parser.add_argument("--checkpoint", type=str, required=True, help="The path to the SAM checkpoint to use for mask "
-                                                                  "generation.")
+parser.add_argument("--checkpoint", type=str, required=True, help="The folder path to where SAM checkpoint will be "
+                                                                  "found or else will be download.")
 parser.add_argument("--device", type=str, default="cuda", help="The device to run generation on.")
 
 args = parser.parse_args()
@@ -189,8 +226,7 @@ if __name__ == "__main__":
     print(args.device)
     try:
         sam_runner = SAMRunner(args.input_folder, args.output_folder, args.trigger_file, args.model_type,
-                               args.checkpoint,
-                               args.device)
+                               args.checkpoint, args.device)
         sam_runner.start_agent()
     except torch.cuda.OutOfMemoryError as e:
         SAMRunner.send_signal('CudaOutOfMemoryError')

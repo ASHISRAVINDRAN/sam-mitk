@@ -11,7 +11,8 @@ setup(
     install_requires=[
         'segment-anything @ git+https://github.com/facebookresearch/segment-anything.git@6fdee8f2727f4506cfbbe553e23b895e27956588',
         'SimpleITK>=2.2.1',
-        'opencv-python>=4.7.0.72'
+        'opencv-python>=4.7.0.72',
+        'tqdm>=4.65.0'
     ],
     classifiers=[
             'Intended Audience :: Science/Research',
