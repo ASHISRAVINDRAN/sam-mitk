@@ -1,4 +1,8 @@
 # Segment Anything for MITK
+
+Copyright (c) [German Cancer Research Center (DKFZ)](https://www.dkfz.de). All rights reserved.
+Please make sure that your usage of this code is in compliance with its [license](LICENSE).
+
 This repo contains Segment Anything model wrapper to be used with MITK.
 The Medical Imaging Interaction Toolkit (MITK) is a free open-source software system for development of interactive medical image processing software. MITK combines the Insight Toolkit (ITK) and the Visualization Toolkit (VTK) with an application framework. MITK's SAM 2D tool uses this wrapper as its backend for inferencing.
 
@@ -19,7 +23,4 @@ python run_inference_daemon.py --input-folder ./input --output-folder ./output -
 ```
 
 ## License
-
-Copyright (c) [German Cancer Research Center (DKFZ)](https://www.dkfz.de). All rights reserved.
-
-The code is available as free open-source software under a [3-clause BSD license](https://github.com/ASHISRAVINDRAN/sam-mitk/blob/main/LICENSE).
+The code is available as free open-source software under a [3-clause BSD license](LICENSE).
