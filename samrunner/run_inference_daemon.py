@@ -1,3 +1,6 @@
+# Copyright 2023 German Cancer Research Center (DKFZ) and contributors.
+# SPDX-License-Identifier: BSD-3
+
 import time
 from typing import Dict
 import csv

@@ -17,3 +17,9 @@ The program can be used independent of MITK.
 ```bash
 python run_inference_daemon.py --input-folder ./input --output-folder ./output --trigger-file trigger.csv --model-type vit_b --checkpoint ./vit_b.pth --device cuda
 ```
+
+## License
+
+Copyright (c) [German Cancer Research Center (DKFZ)](https://www.dkfz.de). All rights reserved.
+
+The code is available as free open-source software under a [3-clause BSD license](https://github.com/ASHISRAVINDRAN/sam-mitk/blob/main/LICENSE).
