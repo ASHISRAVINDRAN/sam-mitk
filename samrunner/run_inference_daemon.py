@@ -93,7 +93,7 @@ class SAMRunner:
             except:
                 print('Exception occured, trying again...')
                 n_try += 1
-                time.sleep(0.001)
+                time.sleep(0.1*n_try)
             else:
                 break
         return image_2d
