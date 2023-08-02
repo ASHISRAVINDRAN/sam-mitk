@@ -21,6 +21,9 @@ MITK_META_JSON = u'[{"labels": [{"color": {"type": "ColorProperty","value": [1.0
 
 
 class Feature:
+    """
+    Class object to store embedding features and its metadata.
+    """
     def __init__(self, input_size: tuple = None, original_size: tuple = None, feature_space: np.ndarray = None):
         self.input_size = input_size
         self.original_size = original_size
@@ -28,7 +31,9 @@ class Feature:
 
 
 class SAMRunner:
-
+    """
+    SAM agent to continuously monitor given folders and write out segmentations
+    """
     def __init__(self, input_dir, output_folder, trigger_file, model_type, checkpoint_dir, device):
         self.input_dir: Path = Path(input_dir)
         self.output_folder: Path = Path(output_folder)
@@ -46,11 +51,23 @@ class SAMRunner:
         self.predictor = SamPredictor(sam)
 
     @staticmethod
-    def send_signal(signal):
+    def send_signal(signal:str):
+        '''
+        Sends signal to caller. For MITK, a simple print should suffice.
+        @param signal:
+        @return:
+        '''
         print(signal)
 
     @staticmethod
-    def download_model(model_type, target_dir: Path, force=False) -> Path:
+    def download_model(model_type:str, target_dir: Path, force=False) -> Path:
+        '''
+        Downloads model checkpoint from internet to the target directory provided.
+        @param model_type:
+        @param target_dir:
+        @param force:
+        @return:
+        '''
         if model_type == 'vit_h':
             url = 'https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth'
         if model_type == 'vit_l':
@@ -84,7 +101,12 @@ class SAMRunner:
             raise error
         return file_path
 
-    def get_nifti_image(self, file):
+    def get_image_from_file(self, file):
+        '''
+        Loads image file as numpy array. Retries RETRY_LOADING times with time delay.
+        @param file:
+        @return: numpy array
+        '''
         n_try = 0
         while n_try < self.RETRY_LOADING:
             try:
@@ -99,11 +121,19 @@ class SAMRunner:
         return image_2d
 
     def IsStop(self):
+        '''
+        Getter for self.stop variable
+        @return: bool
+        '''
         if not self.stop:
             self.check_control_file()
         return self.stop
 
     def check_control_file(self):
+        '''
+        Opens control file and checks for KILL signal in it.
+        @return:
+        '''
         try:
             with open(self.control_file, mode='r') as file:
                 for line in file:
@@ -117,6 +147,11 @@ class SAMRunner:
             self.stop = False
 
     def get_features(self, image: np.ndarray):
+        '''
+        Runs SAM on the input numpy array image. If input is 2D single channel, it's made channel by duplicating.
+        @param image:
+        @return:
+        '''
         assert image.ndim in (2, 3)
         assert image.dtype == np.uint8
         if image.ndim == 2:
@@ -124,6 +159,10 @@ class SAMRunner:
         self.predictor.set_image(image)
 
     def get_points_and_labels_from_trigger_file(self):
+        '''
+        Reads trigger file and parses input points and labels to form prompts for SAM.
+        @return:
+        '''
         with open(self.trigger_file, mode='r') as csv_file:
             csv_reader = csv.DictReader(csv_file)
             points = []
@@ -139,12 +178,21 @@ class SAMRunner:
         return input_points, input_labels
 
     def set_features_to_predictor(self, features: Feature):
+        '''
+        Copies SAM predicted embeddings to feature objects.
+        @param features:
+        @return:
+        '''
         self.predictor.features = features.feature_embeddings
         self.predictor.original_size = features.original_size
         self.predictor.input_size = features.input_size
         self.predictor.is_image_set = True
 
     def start_agent(self):
+        '''
+        The agent which coordinates all the operations of monitoring, predicting and caching SAM inferencing.
+        @return:
+        '''
         path_template = os.path.join(self.input_dir, '*.nrrd')
         self.send_signal('READY')
         while not glob.glob(path_template):
@@ -158,7 +206,7 @@ class SAMRunner:
             if self.IsStop(): break
             if self.active_file_name not in self.MASTER_RECORD:
                 print('File NOT found in MASTER RECORD:', self.active_file_name)
-                image_2d = self.get_nifti_image(file_path)
+                image_2d = self.get_image_from_file(file_path)
                 image_2d = cv2.normalize(image_2d, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
                 self.get_features(image_2d)
                 feature_object = Feature(self.predictor.input_size, self.predictor.original_size,
