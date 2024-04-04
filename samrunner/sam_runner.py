@@ -6,7 +6,7 @@ from base_runner import BaseRunner
 from base_runner import Feature
 from segment_anything import sam_model_registry, SamPredictor
 from pathlib import Path
-
+import csv
 
 class SAMRunner(BaseRunner):
     """
