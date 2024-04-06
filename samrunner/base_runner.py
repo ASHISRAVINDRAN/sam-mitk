@@ -13,7 +13,7 @@ from pathlib import Path
 import numpy as np
 import requests
 from requests import HTTPError
-
+import hashlib
 
 MITK_META_JSON = u'[{"labels": [{"color": {"type": "ColorProperty","value": [1.0, 0.0, 0.0]},"locked": true,"name": "Label 1","opacity": 1,"value": 1,"visible": true}]}]'
 
@@ -158,7 +158,15 @@ class BaseRunner:
             print(f'Error occurred during download: {error}')
             raise error
         return file_path
-
+    
+    @staticmethod
+    def is_md5sum(filepath, target_m5sum):
+        with open(filepath, 'rb') as file:
+            data = file.read()    
+            md5_sum = hashlib.md5(data).hexdigest()
+        print('Md5 sum:', md5_sum)
+        return md5_sum == target_m5sum
+    
     @staticmethod
     def write_image_to_disk(mask: np.ndarray, output_path: str):
         seg_image_itk = sitk.GetImageFromArray(mask.astype(np.uint8, copy=False))

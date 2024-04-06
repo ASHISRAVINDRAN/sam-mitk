@@ -1,6 +1,7 @@
 # Copyright 2023 German Cancer Research Center (DKFZ) and contributors.
 # SPDX-License-Identifier: BSD-3
 
+import os
 import numpy as np
 import torch
 import csv
@@ -40,7 +41,15 @@ class MedSAMRunner(BaseRunner):
             url = 'https://zenodo.org/records/10689643/files/medsam_vit_b.pth'
         else:
             raise Exception('Model type not supported')
-        return BaseRunner.download_model(url, target_dir, force)
+        n_try = 5
+        while n_try !=0:
+            filepath = BaseRunner.download_model(url, target_dir, force)
+            if BaseRunner.is_md5sum(filepath, '3bb6db55bd0c9ca30b61248bca72f8d6'):
+                return filepath
+            else:
+                n_try -= 1
+                os.remove(filepath)
+                print('Downloaded file is corrupted. Please check your internet connection. Retrying...')
 
     def get_features(self, image):
         '''
