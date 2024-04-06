@@ -19,9 +19,10 @@ setup(
             'Topic :: Scientific/Engineering',
             'Operating System :: Unix',
             'Operating System :: Microsoft :: Windows :: Windows 10'
-            'Programming Language :: Python :: 3.8'
             'Programming Language :: Python :: 3.9'
             'Programming Language :: Python :: 3.10'
+            'Programming Language :: Python :: 3.11'
+            'Programming Language :: Python :: 3.12'
             'Development Status :: 4 - Beta'
             'Environment :: GPU :: NVIDIA CUDA'
         ],

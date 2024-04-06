@@ -58,6 +58,7 @@ class MedSAMRunner(BaseRunner):
         img_1024 = transform.resize(
             image_3c, (1024, 1024), order=3, preserve_range=True, anti_aliasing=True
         ).astype(np.uint8)
+        img_1024 = (img_1024 - img_1024.min()) / np.clip(img_1024.max() - img_1024.min(), a_min=1e-8, a_max=None)
         # convert the shape to (3, H, W)
         img_1024_tensor = (torch.tensor(img_1024).float().permute(2, 0, 1).unsqueeze(0).to(self.device))
         return img_1024_tensor
