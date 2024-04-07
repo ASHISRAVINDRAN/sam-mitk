@@ -11,6 +11,8 @@ setup(
     install_requires=[
         'medsam @ git+https://github.com/bowang-lab/MedSAM.git@2b7c64cf80bf1aba546627db9b13db045dd1cbab',
         'SimpleITK>=2.2.1',
+        'requests==2.27.1;python_version<"3.10"',
+        'requests;python_version>="3.10"',
         'opencv-python>=4.7.0.72',
         'tqdm>=4.65.0'
     ],
