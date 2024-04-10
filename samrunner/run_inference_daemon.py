@@ -4,6 +4,7 @@
 import time
 import torch
 import argparse
+from base_runner import BaseRunner
 from sam_runner import SAMRunner
 from medsam_runner import MedSAMRunner
 
@@ -40,10 +41,10 @@ if __name__ == "__main__":
                                   args.checkpoint, args.device)
         runner.start_agent()
     except torch.cuda.OutOfMemoryError as e:
-        runner.send_signal('CudaOutOfMemoryError')
+        BaseRunner.send_signal('CudaOutOfMemoryError')
         torch.cuda.empty_cache()
         print(e)
     except Exception as e:
-        runner.send_signal('KILL')
+        BaseRunner.send_signal('KILL')
         print(e)
     print('Stopping daemon...')
