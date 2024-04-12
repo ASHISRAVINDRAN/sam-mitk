@@ -1,6 +1,7 @@
 # Copyright 2023 German Cancer Research Center (DKFZ) and contributors.
 # SPDX-License-Identifier: BSD-3
 
+import sys
 import time
 import torch
 import argparse
@@ -33,6 +34,7 @@ if __name__ == "__main__":
     print(args.model_type)
     print(args.device)
     try:
+        time.sleep(1)  # arbitrary wait time for stdout & stderr pipes to get established into MITK
         if args.backend == 'SAM':
             runner = SAMRunner(args.input_folder, args.output_folder, args.trigger_file, args.model_type,
                                args.checkpoint, args.device)
@@ -41,10 +43,13 @@ if __name__ == "__main__":
                                   args.checkpoint, args.device)
         runner.start_agent()
     except torch.cuda.OutOfMemoryError as e:
+        time.sleep(0.5)
         BaseRunner.send_signal('CudaOutOfMemoryError')
         torch.cuda.empty_cache()
-        print(e)
+        print(e, file=sys.stderr) # Force to stderr
     except Exception as e:
+        time.sleep(0.5)
         BaseRunner.send_signal('KILL')
-        print(e)
+        print(e, file=sys.stderr) # Force to stderr
+    time.sleep(0.5) # arbitrary wait time for MITK
     print('Stopping daemon...')
